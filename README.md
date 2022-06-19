@@ -5,13 +5,13 @@ Currently it only works for Swedish text since it depends on a language sample. 
 
 * Contents:
 
-** sample.txt = A sample of Swedish text (taken from recent newspaper articles). 
+    sample.txt = A sample of Swedish text (taken from recent newspaper articles). 
 
-** kasiski.py = A python program. 
+    kasiski.py = A python program. 
 
 * Building and dependencies
 
-It is plain Python code, and runs under v 3.10. Only built-in modules used. 
+    It is plain Python code, and runs under v 3.10. Only built-in modules used. 
 
 * To use the python program:
 
