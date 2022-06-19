@@ -17,7 +17,7 @@ Currently it only works for Swedish text since it depends on a language sample. 
 
 ### To use the python program:
 
-    ``python kasiski.py [parameters]``
+    >> python kasiski.py [parameters]
 
     where parameters are
 
