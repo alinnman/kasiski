@@ -6,6 +6,8 @@ Currently it only works for Swedish text since it depends on a language sample. 
 * Contents:
 
     sample.txt = A sample of Swedish text (taken from recent newspaper articles). 
+    
+    kasiski.ini = Configuration file with language specific parameters.
 
     kasiski.py = A python program. 
 
