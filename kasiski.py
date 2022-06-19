@@ -1,3 +1,11 @@
+'''
+Contains a python implementation of Kasiski's attack vs the Vigenère cipher.
+Simple code which can be used for demonstration/education etc. For more information see https://en.wikipedia.org/wiki/Kasiski_examination
+
+/August Linnman, 2022
+
+'''
+
 import string
 from math import log
 import random
