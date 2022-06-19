@@ -3,7 +3,7 @@ Contains a python implementation of Kasiski's attack vs the Vigenère cipher. Si
 
 Currently it only works for Swedish text since it depends on a language sample. (Kasiski's attack is based on statistical analysis). 
 
-## Contents:
+### Contents
 
     sample.txt = A sample of Swedish text (taken from recent newspaper articles). You may replace this file with a sample of any language. 
     
@@ -11,13 +11,13 @@ Currently it only works for Swedish text since it depends on a language sample. 
 
     kasiski.py = A python program. 
 
-## Building and dependencies
+### Building and dependencies
 
     It is plain Python code, and runs under v 3.10. Only built-in modules used. 
 
-## To use the python program:
+### To use the python program:
 
-    >python kasiski.py [parameters]
+    ``python kasiski.py [parameters]``
 
     where parameters are
 
