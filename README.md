@@ -13,6 +13,9 @@ To use the python program:
 >python kasiski.py [parameters]
 
 where parameters are
+
 --ct   "clear text"  : Encrypt a text string
+
 --cit  "cipher text" : Crack a decrypted text string
+
 --test "clear text"  : Run a prolonged test sequence (100 iterations with randomly generated keys) to see if cracking is feasible. 
