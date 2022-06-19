@@ -1,6 +1,9 @@
 '''
 Contains a python implementation of Kasiski's attack vs the Vigenère cipher.
 Simple code which can be used for demonstration/education etc. For more information see https://en.wikipedia.org/wiki/Kasiski_examination
+Contains a python implementation of Kasiski's attack vs the Vigenère cipher. Simple code which can be used for demonstration/education etc. For more information see https://en.wikipedia.org/wiki/Kasiski_examination
+
+Currently it only works for Swedish text since it depends on a language sample. (Kasiski's attack is based on statistical analysis).
 
 /August Linnman, 2022
 
@@ -248,6 +251,8 @@ def findBlockSizes (c, minSize, maxSize, numBs=2):
         averageIoc = iocSum / counter  
         foundRaises [blockSize] = averageIoc / prevIoc
         prevIoc = averageIoc
+    if len(foundRaises) == 0:
+        return []
     bestBlockSize = max(foundRaises.items(), key=lambda x: x[1])[0]
     sortedBlockSizes = dict(sorted(foundRaises.items(), key=lambda item: item[1], reverse=True))
     retVal = []
@@ -294,9 +299,7 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
                     print ("Look at decrypted string for K = "+str(Ktest)+ " = <" + str(decPermutedTestKey) + ">")
                 
                 freqPoint = freqAnalysis (decPermutedTestKey, langSampleText, False)  
- 
                 examinedTestKeys [testKey] = freqPoint
-
             
             B = max(examinedTestKeys.items(), key=lambda x: x[1])
             bestKey = B [0]
@@ -318,7 +321,9 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
         ST = langSampleText
         freqDecrypted = 2*freqAnalysis (result, ST) + freqAnalysisBigrams (result, ST)
         comparedResults [bs] = (result, freqDecrypted, decryptKey)
- 
+
+    if len(comparedResults) == 0:
+        raise Exception ("Cannot find any suitable decryption key. Cleartext is probably too short.")
     B = max(comparedResults.items(), key=lambda x: x[1][1])
     bestResult = B [1][0]
     bestKey    = B [1][2]
@@ -388,9 +393,9 @@ def encrypt (s, kl) :
 def parseArguments ():
     parser = argparse.ArgumentParser(description='Kasiski method', epilog='This is a simple test program for Kasiski\'s attack on Vigenère ciphers')
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-cit",  help="ciphertext to crack",  action="store")
-    group.add_argument("-ct",   help="cleartext to encrypt", action="store")
-    group.add_argument("-test", help="cleartext to use for encryption and cracking attempts in a test sequence", action="store")          
+    group.add_argument("-ct",  "--cleartext_to_encrypt",  help="cleartext to encrypt",  action="store")
+    group.add_argument("-cit", "--ciphertext_to_crack",   help="ciphertext to crack",   action="store")
+    group.add_argument("-test","--run_sequence_of_tests", help="cleartext to use for encryption and cracking attempts in a test sequence", action="store")          
     args = parser.parse_args()
 
     ct = ""
@@ -414,8 +419,10 @@ def parseArguments ():
 def main ():
     clearText, cipherText, test = parseArguments ()
     if cipherText is not None:
+        startTime = time.time()          
         result, bestKey = attack (cipherText, 2, 12, 3)
-        print ("This is the cracking attempt <" + result + ">")
+        endTime = time.time()     
+        print ("This is the cracking attempt <" + result + ">. Time taken = "+str(endTime-startTime)+" sec.")
     elif clearText is not None:
         encryptedText = encrypt (clearText,4)
         print ("This is the encryption: <" + encryptedText + ">")
