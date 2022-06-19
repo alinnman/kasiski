@@ -21,10 +21,10 @@ Currently it only works for Swedish text since it depends on a language sample. 
 
     where parameters are
 
-    -ct   "clear text"  ## Encrypt a text string. The key has length 4 and is randomized. You will not see the key. 
+    -ct   'clear text'  ## Encrypt a text string. The key has length 4 and is randomized. You will not see the key. 
 
-    -cit  "cipher text" ## Crack a decrypted text string. TIP: Use an encryption retrieved from "python kasiski.py -ct <cleartext>"
+    -cit  'cipher text' ## Crack a decrypted text string. TIP: Use an encryption retrieved from "python kasiski.py -ct <cleartext>"
 
-    -test "clear text"  ## Run a prolonged test sequence (100 iterations with randomly generated keys) to see if cracking is feasible. 
+    -test 'clear text'  ## Run a prolonged test sequence (100 iterations with randomly generated keys) to see if cracking is feasible. 
     
     -h ## For help message.
