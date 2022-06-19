@@ -5,8 +5,9 @@ Currently it only works for Swedish text since it depends on a language sample. 
 
 Contents:
 
-sample.txt = A sample of Swedish text (taken from recent newspaper articles). 
-kasiski.py = A python program. 
+* sample.txt = A sample of Swedish text (taken from recent newspaper articles). 
+
+* kasiski.py = A python program. 
 
 To use the python program:
 
