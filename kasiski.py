@@ -3,25 +3,44 @@ from math import log
 import random
 import time
 import argparse
+import configparser
 
+# The setup for the languate
 langChars        = []
 langAlphaChars   = []
-langExtraChars   = "åäö"
-langNumChars     = "1234567890"
-langSpecialChars = " ,.;\"-?!"
+langExtraChars   = ""
+langNumChars     = ""
+langSpecialChars = ""
+lang             = ""
 
+# Reverse lookup maps used
 langMap        = {}
 langAlphaMap   = {}
 
+# Caches for monogram/bigram maps
 monogramCache  = {}
 bigramCache    = {}
 
+# Contains the read sample text for the language
 langSampleText = ""
 
 def setupLanguage ():
+    '''Setup all used language parameters from the ini file'''
     global langAlphaChars
     global langSampleText
+    global lang
+    global langExtraChars
+    global langNumChars
+    global langSpecialChars
 
+    config = configparser.RawConfigParser()
+    config.read('kasiski.ini')
+    lang             = config ['LanguageSpecific']['lang']
+    langExtraChars   = config ['LanguageSpecific']['langExtraChars']
+    langNumChars     = config ['LanguageSpecific']['langNumChars']
+    langSpecialChars = config ['LanguageSpecific']['langSpecialChars'] 
+
+    langChars.append (' ')
     for c in string.ascii_lowercase:
         langChars.append (c)
     for c in langExtraChars:
@@ -320,8 +339,6 @@ def doEncryption (clearText, minKeyLength, maxKeyLength, alphaOnly=False):
     encrypted = SBoxViginere (clearText, K, alpha=alphaOnly)
     decrypted = SBoxViginere (encrypted, negateKey(K), alpha=alphaOnly)
     
-    del K # Forget about used key 
-    
     if (clearText.lower() != decrypted.lower()):
         raise Exception ("Cipher doesn't work!")
     
@@ -338,24 +355,6 @@ def testAttacks (clearText):
     NROFTESTS = 100
     MINKL = 4
     MAXKL = 4
-    #TESTTEXT = "OMELETT ÄR GOTT OCH MIDDAG SERVERAS KLOCKAN FYRA I STORA MATSALEN PÅ TREDJE VÅNINGEN"
-    #TESTTEXT = TESTTEXT.replace (" ", "")
-    #ALPHA = True
-
-    '''
-    TESTTEXT = "Egentligen var Landskrona uttänkt plats men polisen valde att flytta evenemanget."+\
-    " Trots det larmades polis strax innan klockan 15 om våldsamheter i staden. "+\
-    "Det är ett stort antal ungdomar som börjar elda bildäck och bråten som de hittar, "+\
-    "drar ut containrar, stoppar trafiken, man har kastat sten mot polisen, "+\
-    "säger polisens presstalesperson Kim Hild. " +\
-    "Den förbjudna zonen, som beskrivs som en av världens mest förorenade platser, " + \
-    "är den avspärrade platsen där strålningen efter kärnkraftsolyckan 1986 är som starkast."+\
-    "Framför allt finns de radioaktiva partiklarna i jorden, som riskerar att virvla upp om man vistas där."+\
-    "Ryssarna bodde i Röda skogen, grävde sina skyttevärn här, andades in damm, lagade mat och gjorde upp eld här."+\
-    "När gräset brändes andades de in de brända ämnena. Naturligtvis kommer det skada deras hälsa, "+\
-    "det kommer döda en del av dem långsamt och en del av dem kommer dö snabbt, "+\
-    "säger Maksym Shevchuck, biträdande chef för Ukrainas hantering av exkluderingszoner, till AP."
-    '''
     TESTTEXT = clearText
     ALPHA = False
     BSEXAMINED = 3
@@ -379,11 +378,11 @@ def encrypt (s, kl) :
     return encrypted
 
 def parseArguments ():
-    parser = argparse.ArgumentParser(description='Kasiski method')
+    parser = argparse.ArgumentParser(description='Kasiski method', epilog='This is a simple test program for Kasiski\'s attack on Vigenère ciphers')
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-cit", "--ciphertext_to_crack", help="ciphertext to crack", action="store")
-    group.add_argument("-ct",  "--cleartext_to_encrypt", help="cleartext to encrypt", action="store")
-    group.add_argument("-test",  "--run_sequence_of_tests", help="cleartext to use for encryption and cracking attempts in a test sequence", action="store")          
+    group.add_argument("-cit",  help="ciphertext to crack",  action="store")
+    group.add_argument("-ct",   help="cleartext to encrypt", action="store")
+    group.add_argument("-test", help="cleartext to use for encryption and cracking attempts in a test sequence", action="store")          
     args = parser.parse_args()
 
     ct = ""
