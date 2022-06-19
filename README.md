@@ -1,5 +1,5 @@
 # kasiski
-Contains a python implementation of Kasiski's cryptanalysis vs Vigenère cipher. Simple code which can be used for demonstration/education etc. For more information see https://en.wikipedia.org/wiki/Kasiski_examination
+Contains a python implementation of Kasiski's attack vs the Vigenère cipher. Simple code which can be used for demonstration/education etc. For more information see https://en.wikipedia.org/wiki/Kasiski_examination
 
 Currently it only works for Swedish text since it depends on a language sample. (Kasiski's method is based on statistical analysis). 
 
