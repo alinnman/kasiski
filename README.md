@@ -5,7 +5,7 @@ Currently it only works for Swedish text since it depends on a language sample. 
 
 * Contents:
 
-    sample.txt = A sample of Swedish text (taken from recent newspaper articles). 
+    sample.txt = A sample of Swedish text (taken from recent newspaper articles). You may replace this file with a sample of any language. 
     
     kasiski.ini = Configuration file with language specific parameters.
 
