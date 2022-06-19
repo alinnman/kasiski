@@ -1,5 +1,5 @@
 # kasiski
-Contains a python implementation of Kasiski's cryptanalysis vs Vigenere cipher. Simple code which can be used for demonstration/education etc.
+Contains a python implementation of Kasiski's cryptanalysis vs Vigenre cipher. Simple code which can be used for demonstration/education etc.
 
 Currently it only works for Swedish text since it depends on a language sample. (Kasiski's method is based on statistical analysis). 
 
