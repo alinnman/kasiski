@@ -398,9 +398,9 @@ def parseArguments ():
     parser = argparse.ArgumentParser(description='Kasiski method',\
                                      epilog='This is a simple test program for Kasiski\'s attack on Vigenère ciphers')
     
-    parser.add_argument("-if", "--input_file",            help="input file for cleartext (-ct or -test commands)", \
+    parser.add_argument("-if", "--input_file",            help="input file (to use if input parameter values are left blank)", \
                         action="store")
-    parser.add_argument("-of", "--output_file",           help="output file", \
+    parser.add_argument("-of", "--output_file",           help="output file (to use instead of standard output for encrypted or cracked strings)", \
                         action="store")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-enc",  "--cleartext_to_encrypt", help="Cleartext to encrypt",\
