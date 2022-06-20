@@ -366,7 +366,7 @@ def testAttack (testText, minKeyLength, maxKeyLength, maxSize, bsExamined, look=
  
     return stringSimilarity (result.lower(), testText.lower()), bestKey, result
 
-def testAttacks (clearText):     
+def testAttacks (clearText, outputFileName=None):     
     NROFTESTS = 100
     MINKL = 4
     MAXKL = 4
@@ -376,18 +376,29 @@ def testAttacks (clearText):
     LOOK = -1
     MAXKEYLENGTHSEARCH = len(TESTTEXT) // 10
     
-    startTime = time.time()  
+    startTime = time.time()
+
+    original_stdout = sys.stdout
+    if outputFileName is not None:
+        with open(outputFileName, 'w') as f:
+            sys.stdout = f 
 
     successMeasure = 0.0
+    print ("Listing the results of cracking")
     for i in range (0, NROFTESTS):
         sm, bestKey, result = testAttack (TESTTEXT, MINKL, MAXKL, MAXKEYLENGTHSEARCH, BSEXAMINED, LOOK, alphaOnly=ALPHA)
-        print (result) ## TODO REMOVE
+        print ("Using key : " + str(bestKey))
+        print (result)
         successMeasure += sm
     endTime = time.time()        
     avgSuccessMeasure = successMeasure / NROFTESTS
     print ("")
     print (str(NROFTESTS) + " attacks performed. Success measure is " + str(round(avgSuccessMeasure*100,2)) +\
            " %. Time taken = " + str(endTime-startTime) + " sec.")
+
+    sys.stdout = original_stdout
+    if outputFileName is not None:
+        print ("Done. Report written to " + outputFileName)
 
 
 def encrypt (s, kl) :
@@ -403,13 +414,14 @@ def parseArguments ():
     parser.add_argument("-of", "--output_file",           help="output file (to use instead of standard output for encrypted or cracked strings)", \
                         action="store")
     group = parser.add_mutually_exclusive_group(required=True)
+    
     group.add_argument("-enc",  "--cleartext_to_encrypt", help="Cleartext to encrypt",\
-                       action="store", nargs='?', const=0, type=int)
+                       action="store", nargs='?', default="") # nargs='?', const=1, type=int)
     group.add_argument("-crack", "--ciphertext_to_crack", help="Ciphertext to crack",\
-                       action="store", nargs='?', const=0, type=int)
+                       action="store", nargs='?', default="")
     group.add_argument("-test","--run_sequence_of_tests", help="Cleartext to use for encryption and cracking attempts in a test sequence",\
-                       action="store", nargs='?', const=0, type=int)
- 
+                       action="store", nargs='?', default="")
+
     args = parser.parse_args()
     va = vars(args)
     
@@ -420,7 +432,7 @@ def parseArguments ():
     inputFileName  = va ['input_file']
     outputFileName = va ['output_file']
 
-    if (ct == 0 or cit == 0 or test == 0) and inputFileName is None:
+    if (ct == "" or cit == "" or test == "") and inputFileName is None:
         parser.error ("You need to specify -if since one of -enc, -crack or -test have been set but not assigned a value")
 
     return ct, cit, test, inputFileName, outputFileName 
@@ -437,7 +449,7 @@ def main ():
     
     clearText, cipherText, test, inputFileName, outputFileName = parseArguments ()
 
-    if clearText is not None :
+    if clearText != "" :
         if inputFileName is not None:
             clearText = readFromFile (inputFileName)
         encryptedText, usedKey = encrypt (clearText,4)
@@ -447,7 +459,7 @@ def main ():
         else:
             print ("This is the encryption: <" + encryptedText + ">")
         print ("Used key = " + str(usedKey))
-    elif cipherText is not None:
+    elif cipherText != "":
         if inputFileName is not None:
             cipherText = readFromFile (inputFileName)
         startTime = time.time()          
@@ -458,10 +470,10 @@ def main ():
             print ("Cracking attempt written to " + outputFileName + ". Time taken = "+str(endTime-startTime)+" sec.")            
         else:
             print ("This is the cracking attempt <" + result + ">. Time taken = "+str(endTime-startTime)+" sec.")        
-    elif test is not None:
+    elif test != "":
         if inputFileName is not None:
             test = readFromFile (inputFileName)
-        testAttacks(test)
+        testAttacks(test, outputFileName)
     else:
         raise Exception ("Invalid arguments specified")
 
