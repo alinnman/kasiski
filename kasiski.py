@@ -5,7 +5,7 @@ Contains a python implementation of Kasiski's attack vs the Vigenère cipher. Si
 
 Currently it only works for Swedish text since it depends on a language sample. (Kasiski's attack is based on statistical analysis).
 
-/August Linnman, 2022
+/August Linnman, June 2022
 
 '''
 
@@ -198,7 +198,7 @@ def indexOfCoincidence (s):
         result += monograms[m]**2
     return result    
     
-def SBoxViginere (s, K, alpha=False):
+def Viginere (s, K, alpha=False):
  
     result = []
     s = s.lower()
@@ -293,7 +293,7 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
 
             for testKey in range(0, len(langChars)):
                 Ktest = [-testKey]
-                decPermutedTestKey = SBoxViginere (testString, Ktest, alpha=alphaOnly)
+                decPermutedTestKey = Viginere (testString, Ktest, alpha=alphaOnly)
                 
                 if look == i:
                     print ("Look at decrypted string for K = "+str(Ktest)+ " = <" + str(decPermutedTestKey) + ">")
@@ -316,7 +316,7 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
             except IndexError:
                 # Failed to find suitable key. 
                 return "-"
-        result = SBoxViginere (s, decryptKey, alpha=alphaOnly)
+        result = Viginere (s, decryptKey, alpha=alphaOnly)
  
         ST = langSampleText
         freqDecrypted = 2*freqAnalysis (result, ST) + freqAnalysisBigrams (result, ST)
@@ -339,7 +339,8 @@ def stringSimilarity (a, b):
 
 def doEncryption (clearText, minKeyLength, maxKeyLength, alphaOnly=False):
     KL = int(random.uniform (minKeyLength, maxKeyLength))
- 
+
+    # Randomize a key
     K = []
     if alphaOnly:
         LC = len(langAlphaChars)
@@ -349,16 +350,17 @@ def doEncryption (clearText, minKeyLength, maxKeyLength, alphaOnly=False):
         shift = int(random.uniform (0, LC))
         K.append (shift)
 
-    encrypted = SBoxViginere (clearText, K, alpha=alphaOnly)
-    decrypted = SBoxViginere (encrypted, negateKey(K), alpha=alphaOnly)
+    encrypted = Viginere (clearText, K, alpha=alphaOnly)
+    ''' This code is just for verification
+    decrypted = Viginere (encrypted, negateKey(K), alpha=alphaOnly)
     
     if (clearText.lower() != decrypted.lower()):
         raise Exception ("Cipher doesn't work!")
-    
-    return encrypted
+    '''
+    return encrypted, K
     
 def testAttack (testText, minKeyLength, maxKeyLength, maxSize, bsExamined, look=-1, alphaOnly=False): 
-    encrypted = doEncryption (testText, minKeyLength, maxKeyLength, alphaOnly=alphaOnly)
+    encrypted, usedKey = doEncryption (testText, minKeyLength, maxKeyLength, alphaOnly=alphaOnly)
  
     result, bestKey = attack (encrypted, 1, maxSize, bsExamined, look=look, alphaOnly=alphaOnly)
  
@@ -379,60 +381,90 @@ def testAttacks (clearText):
     successMeasure = 0.0
     for i in range (0, NROFTESTS):
         sm, bestKey, result = testAttack (TESTTEXT, MINKL, MAXKL, MAXKEYLENGTHSEARCH, BSEXAMINED, LOOK, alphaOnly=ALPHA)
+        print (result) ## TODO REMOVE
         successMeasure += sm
     endTime = time.time()        
     avgSuccessMeasure = successMeasure / NROFTESTS
     print ("")
-    print (str(NROFTESTS) + " attacks performed. Success measure is " + str(round(avgSuccessMeasure*100,2)) + " %. Time taken = " + str(endTime-startTime) + " sec.")
+    print (str(NROFTESTS) + " attacks performed. Success measure is " + str(round(avgSuccessMeasure*100,2)) +\
+           " %. Time taken = " + str(endTime-startTime) + " sec.")
 
 
 def encrypt (s, kl) :
-    encrypted = doEncryption (s, kl, kl, False)
-    return encrypted
+    encrypted, usedKey = doEncryption (s, kl, kl, False)
+    return encrypted, usedKey
 
 def parseArguments ():
-    parser = argparse.ArgumentParser(description='Kasiski method', epilog='This is a simple test program for Kasiski\'s attack on Vigenère ciphers')
+    parser = argparse.ArgumentParser(description='Kasiski method',\
+                                     epilog='This is a simple test program for Kasiski\'s attack on Vigenère ciphers')
+    
+    parser.add_argument("-if", "--input_file",            help="input file for cleartext (-ct or -test commands)", \
+                        action="store")
+    parser.add_argument("-of", "--output_file",           help="output file", \
+                        action="store")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-ct",  "--cleartext_to_encrypt",  help="cleartext to encrypt",  action="store")
-    group.add_argument("-cit", "--ciphertext_to_crack",   help="ciphertext to crack",   action="store")
-    group.add_argument("-test","--run_sequence_of_tests", help="cleartext to use for encryption and cracking attempts in a test sequence", action="store")          
+    group.add_argument("-enc",  "--cleartext_to_encrypt", help="Cleartext to encrypt",\
+                       action="store", nargs='?', const=0, type=int)
+    group.add_argument("-crack", "--ciphertext_to_crack", help="Ciphertext to crack",\
+                       action="store", nargs='?', const=0, type=int)
+    group.add_argument("-test","--run_sequence_of_tests", help="Cleartext to use for encryption and cracking attempts in a test sequence",\
+                       action="store", nargs='?', const=0, type=int)
+ 
     args = parser.parse_args()
+    va = vars(args)
+    
+    ct             = va ['cleartext_to_encrypt']
+    cit            = va ['ciphertext_to_crack']
+    test           = va ['run_sequence_of_tests']
+    
+    inputFileName  = va ['input_file']
+    outputFileName = va ['output_file']
 
-    ct = ""
-    try:
-        ct = args.cleartext_to_encrypt
-    except AttributeError:
-        pass
-    cit = ""
-    try:
-        cit = args.ciphertext_to_crack
-    except AttributeError:
-        pass
-    test = ""
-    try:
-        test = args.run_sequence_of_tests
-    except AttributeError:
-        pass    
+    if (ct == 0 or cit == 0 or test == 0) and inputFileName is None:
+        parser.error ("You need to specify -if since one of -enc, -crack or -test have been set but not assigned a value")
 
-    return ct, cit, test
+    return ct, cit, test, inputFileName, outputFileName 
 
 def main ():
-    clearText, cipherText, test = parseArguments ()
-    if cipherText is not None:
+
+    def readFromFile (fileName) :
+        with open(fileName, 'r', encoding='utf-8') as file:
+            return (file.read().replace('\n', ''))
+
+    def writeToFile (fileName, s) :
+        with open(fileName, 'w', encoding='utf-8') as file:
+            file.write(s)
+    
+    clearText, cipherText, test, inputFileName, outputFileName = parseArguments ()
+
+    if clearText is not None :
+        if inputFileName is not None:
+            clearText = readFromFile (inputFileName)
+        encryptedText, usedKey = encrypt (clearText,4)
+        if outputFileName is not None:
+            writeToFile (outputFileName, encryptedText)
+            print ("Encrypted text written to " + outputFileName)
+        else:
+            print ("This is the encryption: <" + encryptedText + ">")
+        print ("Used key = " + str(usedKey))
+    elif cipherText is not None:
+        if inputFileName is not None:
+            cipherText = readFromFile (inputFileName)
         startTime = time.time()          
         result, bestKey = attack (cipherText, 2, 12, 3)
-        endTime = time.time()     
-        print ("This is the cracking attempt <" + result + ">. Time taken = "+str(endTime-startTime)+" sec.")
-    elif clearText is not None:
-        encryptedText = encrypt (clearText,4)
-        print ("This is the encryption: <" + encryptedText + ">")
+        endTime = time.time()
+        if outputFileName is not None:
+            writeToFile (outputFileName, result)
+            print ("Cracking attempt written to " + outputFileName + ". Time taken = "+str(endTime-startTime)+" sec.")            
+        else:
+            print ("This is the cracking attempt <" + result + ">. Time taken = "+str(endTime-startTime)+" sec.")        
     elif test is not None:
+        if inputFileName is not None:
+            test = readFromFile (inputFileName)
         testAttacks(test)
     else:
         raise Exception ("Invalid arguments specified")
 
-
-parseArguments ()        
 setupLanguage ()
 main ()
 
