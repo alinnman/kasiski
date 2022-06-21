@@ -15,6 +15,7 @@ import random
 import time
 import argparse
 import configparser
+import sys
 
 # The setup for the languate
 langChars        = []
@@ -49,7 +50,8 @@ def setupLanguage ():
     lang             = config ['LanguageSpecific']['lang']
     langExtraChars   = config ['LanguageSpecific']['langExtraChars']
     langNumChars     = config ['LanguageSpecific']['langNumChars']
-    langSpecialChars = config ['LanguageSpecific']['langSpecialChars'] 
+    langSpecialChars = config ['LanguageSpecific']['langSpecialChars']
+    sampleFileName   = config ['LanguageSpecific']['sampleFileName']
 
     langChars.append (' ')
     for c in string.ascii_lowercase:
@@ -62,7 +64,7 @@ def setupLanguage ():
     for c in langNumChars:
         langChars.append (c)    
 
-    with open('sample.txt', 'r', encoding='utf-8') as file:
+    with open(sampleFileName, 'r', encoding='utf-8') as file:
         langSampleText = file.read().replace('\n', '')
 
     for i in range (0, len(langChars)):
