@@ -36,8 +36,14 @@ bigramCache    = {}
 # Contains the read sample text for the language
 langSampleText = ""
 
-def setupLanguage ():
+languageSetup = ""
+
+def setupLanguage (iniFileName):
     '''Setup all used language parameters from the ini file'''
+    global languageSetup
+    if languageSetup == iniFileName:
+        return
+    
     global langAlphaChars
     global langSampleText
     global lang
@@ -46,7 +52,7 @@ def setupLanguage ():
     global langSpecialChars
 
     config = configparser.RawConfigParser()
-    config.read('kasiski.ini')
+    config.read(iniFileName)
     lang             = config ['LanguageSpecific']['lang']
     langExtraChars   = config ['LanguageSpecific']['langExtraChars']
     langNumChars     = config ['LanguageSpecific']['langNumChars']
@@ -71,6 +77,7 @@ def setupLanguage ():
         langMap      [langChars[i]] = i
     for i in range (0, len(langAlphaChars)):
         langAlphaMap [langAlphaChars[i]] = i
+    languageSetup = iniFileName
 
 def setupMonograms (s, alpha=False):
     global monogramCache
@@ -382,8 +389,8 @@ def testAttacks (clearText, outputFileName=None):
 
     original_stdout = sys.stdout
     if outputFileName is not None:
-        with open(outputFileName, 'w') as f:
-            sys.stdout = f 
+        f = open(outputFileName, 'w')
+        sys.stdout = f 
 
     successMeasure = 0.0
     print ("Listing the results of cracking")
@@ -411,10 +418,15 @@ def parseArguments (args):
     parser = argparse.ArgumentParser(description='Kasiski method',\
                                      epilog='This is a simple test program for Kasiski\'s attack on Vigenère ciphers')
 
-    parser.add_argument("-if", "--input_file",            help="input file (to use if input parameter values are left blank)", \
+    parser.add_argument("-if", "--input_file",\
+    help="input file (to use if input parameter values are left blank)", \
                         action="store")
-    parser.add_argument("-of", "--output_file",           help="output file (to use instead of standard output for encrypted or cracked strings)", \
+    parser.add_argument("-of", "--output_file",\
+    help="output file (to use instead of standard output for encrypted or cracked strings)", \
                         action="store")
+    parser.add_argument("-ini", "--ini_file",\
+    help="Ini file to use (default is 'kasiski.ini')", \
+                        action="store", nargs='?', default="kasiski.ini")                        
     group = parser.add_mutually_exclusive_group(required=True)
 
     group.add_argument("-enc",  "--cleartext_to_encrypt", help="Cleartext to encrypt",\
@@ -426,8 +438,6 @@ def parseArguments (args):
 
     argsParsed = parser.parse_args(args)
     va = vars(argsParsed)
-    
-    print (va) # TODO REMOVE
 
     ct             = va ['cleartext_to_encrypt']
     cit            = va ['ciphertext_to_crack']
@@ -438,6 +448,9 @@ def parseArguments (args):
 
     if (ct is None or cit is None or test is None) and inputFileName is None:
         parser.error ("You need to specify -if since one of -enc, -crack or -test have been set but not assigned a value")
+    
+    iniFileName = 'kasiski.ini' 
+    setupLanguage (va ['ini_file'])
 
     return ct, cit, test, inputFileName, outputFileName 
 
@@ -482,8 +495,6 @@ def main (args=None):
         testAttacks(test, outputFileName)
     else:
         raise Exception ("Invalid arguments specified")
-
-setupLanguage ()
 
 if __name__ == "__main__":
     main ()

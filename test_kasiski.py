@@ -25,6 +25,8 @@ def test_encrypt_crack ():
     
 def test_test ():
     kasiski.main (["-test", textToEncrypt])
+    kasiski.main (["-test", textToEncrypt,"-of","foo.txt"])
+    
 
     
 
