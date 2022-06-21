@@ -35,3 +35,8 @@ Currently it only works for Swedish text since it depends on a language sample. 
     -of <output file name> ## Use this to write output to disk
     
     -h ## For help message.
+    
+### Testing
+
+    Just run pytest. First you need to install using "pip install pytest"
+    >> pytest
