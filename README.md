@@ -10,10 +10,13 @@ Currently it only works for Swedish text since it depends on a language sample. 
     kasiski.ini = Configuration file with language specific parameters.
 
     kasiski.py = A python program. 
+    
+    test_kasiski.py = Test code (uses pytest)
 
 ### Building and dependencies
 
     It is plain Python code, and runs under v 3.10. Only built-in modules used. 
+    The test is based on pytest (which has to be installed using "pip")
 
 ### To use the python program:
 
