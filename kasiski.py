@@ -58,11 +58,11 @@ def setupLanguage ():
         langChars.append (c)
     for c in langExtraChars:
         langChars.append (c)
-    langAlphaChars = list(langChars)    
+    langAlphaChars = list(langChars)
     for c in langSpecialChars:
-        langChars.append (c)    
+        langChars.append (c)
     for c in langNumChars:
-        langChars.append (c)    
+        langChars.append (c)
 
     with open(sampleFileName, 'r', encoding='utf-8') as file:
         langSampleText = file.read().replace('\n', '')
@@ -74,19 +74,19 @@ def setupLanguage ():
 
 def setupMonograms (s, alpha=False):
     global monogramCache
-    
+
     try:
         return monogramCache [(s,alpha)]
     except KeyError:
         pass
-    
+
     result = {}
     if alpha:
         charsChosen = langAlphaChars
         mapChosen = langAlphaMap
     else:
         charsChosen = langChars
-        mapChosen = langMap 
+        mapChosen = langMap
     for c in charsChosen:
         result [c] = 0
     for i in range(0,len(s)):
@@ -97,7 +97,7 @@ def setupMonograms (s, alpha=False):
         except KeyError:
             pass
         if aPos != -1:
-            monogram = str(a) 
+            monogram = str(a)
             count = 0
             try:
                 count = result [monogram]
@@ -116,16 +116,16 @@ def setupMonograms (s, alpha=False):
 
 def setupBigrams (s):
     global bigramCache
-    
+
     s = s.lower()
-    
+
     try:
         return bigramCache [s]
     except KeyError:
-        pass    
-    
+        pass
+
     result = {}
- 
+
     for i in range(0,len(s)-1):
         a = s [i]
         b = s [i+1]
@@ -165,7 +165,7 @@ def freqAnalysis (s, lang=langSampleText, alpha=False):
         b = langNgrams [m]
         summed += (a - b)**2
         count += 1
-    retval = summed 
+    retval = summed
     return -log(retval)
 
 def freqAnalysisBigrams (s, lang=langSampleText):
@@ -185,7 +185,7 @@ def freqAnalysisBigrams (s, lang=langSampleText):
             b = -0.1
         summed += (a - b)**2
         count += 1
-    retval = summed 
+    retval = summed
     if retval == 0:
         retval = -1
     else:
@@ -198,10 +198,10 @@ def indexOfCoincidence (s):
     result = 0
     for m in monograms:
         result += monograms[m]**2
-    return result    
-    
+    return result
+
 def Viginere (s, K, alpha=False):
- 
+
     result = []
     s = s.lower()
     if alpha:
@@ -250,7 +250,7 @@ def findBlockSizes (c, minSize, maxSize, numBs=2):
             ioc = indexOfCoincidence (testString)
             iocSum += ioc
             counter += 1
-        averageIoc = iocSum / counter  
+        averageIoc = iocSum / counter
         foundRaises [blockSize] = averageIoc / prevIoc
         prevIoc = averageIoc
     if len(foundRaises) == 0:
@@ -262,7 +262,7 @@ def findBlockSizes (c, minSize, maxSize, numBs=2):
     for bs in sortedBlockSizes:
         retVal.append (bs)
         counter += 1
-        if counter >= numBs: 
+        if counter >= numBs:
             break
     return retVal
 
@@ -276,12 +276,12 @@ def getExtract (s, bs, index):
     return retVal.join(result)
 
 def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
- 
+
     bss = findBlockSizes (s,minSize,maxSize,bsExamined)
     comparedResults = {}
-    
-    for bs in bss: 
-    
+
+    for bs in bss:
+
         if bs == -1:
             return "-"
 
@@ -290,23 +290,23 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
         for i in range (0, bs):
             candidateKeys.append ([])
             testString = getExtract (s, bs, i)
-            
+
             examinedTestKeys = {}
 
             for testKey in range(0, len(langChars)):
                 Ktest = [-testKey]
                 decPermutedTestKey = Viginere (testString, Ktest, alpha=alphaOnly)
-                
+
                 if look == i:
                     print ("Look at decrypted string for K = "+str(Ktest)+ " = <" + str(decPermutedTestKey) + ">")
-                
+
                 freqPoint = freqAnalysis (decPermutedTestKey, langSampleText, False)  
                 examinedTestKeys [testKey] = freqPoint
-            
+
             B = max(examinedTestKeys.items(), key=lambda x: x[1])
             bestKey = B [0]
             bestValue = B [1]
-            
+
             if look == i:
                 print ("Best key was = " + str(bestKey))
 
@@ -316,10 +316,10 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
             try:
                 decryptKey.append (-(candidateKeys[i][0]))
             except IndexError:
-                # Failed to find suitable key. 
+                # Failed to find suitable key.
                 return "-"
         result = Viginere (s, decryptKey, alpha=alphaOnly)
- 
+
         ST = langSampleText
         freqDecrypted = 2*freqAnalysis (result, ST) + freqAnalysisBigrams (result, ST)
         comparedResults [bs] = (result, freqDecrypted, decryptKey)
@@ -355,20 +355,20 @@ def doEncryption (clearText, minKeyLength, maxKeyLength, alphaOnly=False):
     encrypted = Viginere (clearText, K, alpha=alphaOnly)
     ''' This code is just for verification
     decrypted = Viginere (encrypted, negateKey(K), alpha=alphaOnly)
-    
+
     if (clearText.lower() != decrypted.lower()):
         raise Exception ("Cipher doesn't work!")
     '''
     return encrypted, K
-    
+
 def testAttack (testText, minKeyLength, maxKeyLength, maxSize, bsExamined, look=-1, alphaOnly=False): 
     encrypted, usedKey = doEncryption (testText, minKeyLength, maxKeyLength, alphaOnly=alphaOnly)
- 
+
     result, bestKey = attack (encrypted, 1, maxSize, bsExamined, look=look, alphaOnly=alphaOnly)
- 
+
     return stringSimilarity (result.lower(), testText.lower()), bestKey, result
 
-def testAttacks (clearText, outputFileName=None):     
+def testAttacks (clearText, outputFileName=None):
     NROFTESTS = 100
     MINKL = 4
     MAXKL = 4
@@ -377,7 +377,7 @@ def testAttacks (clearText, outputFileName=None):
     BSEXAMINED = 3
     LOOK = -1
     MAXKEYLENGTHSEARCH = len(TESTTEXT) // 10
-    
+
     startTime = time.time()
 
     original_stdout = sys.stdout
@@ -392,7 +392,7 @@ def testAttacks (clearText, outputFileName=None):
         print ("Using key : " + str(bestKey))
         print (result)
         successMeasure += sm
-    endTime = time.time()        
+    endTime = time.time()
     avgSuccessMeasure = successMeasure / NROFTESTS
     print ("")
     print (str(NROFTESTS) + " attacks performed. Success measure is " + str(round(avgSuccessMeasure*100,2)) +\
@@ -407,16 +407,16 @@ def encrypt (s, kl) :
     encrypted, usedKey = doEncryption (s, kl, kl, False)
     return encrypted, usedKey
 
-def parseArguments ():
+def parseArguments (args):
     parser = argparse.ArgumentParser(description='Kasiski method',\
                                      epilog='This is a simple test program for Kasiski\'s attack on Vigenère ciphers')
-    
+
     parser.add_argument("-if", "--input_file",            help="input file (to use if input parameter values are left blank)", \
                         action="store")
     parser.add_argument("-of", "--output_file",           help="output file (to use instead of standard output for encrypted or cracked strings)", \
                         action="store")
     group = parser.add_mutually_exclusive_group(required=True)
-    
+
     group.add_argument("-enc",  "--cleartext_to_encrypt", help="Cleartext to encrypt",\
                        action="store", nargs='?', default="") # nargs='?', const=1, type=int)
     group.add_argument("-crack", "--ciphertext_to_crack", help="Ciphertext to crack",\
@@ -424,22 +424,24 @@ def parseArguments ():
     group.add_argument("-test","--run_sequence_of_tests", help="Cleartext to use for encryption and cracking attempts in a test sequence",\
                        action="store", nargs='?', default="")
 
-    args = parser.parse_args()
-    va = vars(args)
+    argsParsed = parser.parse_args(args)
+    va = vars(argsParsed)
     
+    print (va) # TODO REMOVE
+
     ct             = va ['cleartext_to_encrypt']
     cit            = va ['ciphertext_to_crack']
     test           = va ['run_sequence_of_tests']
-    
+
     inputFileName  = va ['input_file']
     outputFileName = va ['output_file']
 
-    if (ct == "" or cit == "" or test == "") and inputFileName is None:
+    if (ct is None or cit is None or test is None) and inputFileName is None:
         parser.error ("You need to specify -if since one of -enc, -crack or -test have been set but not assigned a value")
 
     return ct, cit, test, inputFileName, outputFileName 
 
-def main ():
+def main (args=None):
 
     def readFromFile (fileName) :
         with open(fileName, 'r', encoding='utf-8') as file:
@@ -448,8 +450,10 @@ def main ():
     def writeToFile (fileName, s) :
         with open(fileName, 'w', encoding='utf-8') as file:
             file.write(s)
-    
-    clearText, cipherText, test, inputFileName, outputFileName = parseArguments ()
+
+    if args == None:
+        args = sys.argv[1:]
+    clearText, cipherText, test, inputFileName, outputFileName = parseArguments (args)
 
     if clearText != "" :
         if inputFileName is not None:
@@ -464,14 +468,14 @@ def main ():
     elif cipherText != "":
         if inputFileName is not None:
             cipherText = readFromFile (inputFileName)
-        startTime = time.time()          
+        startTime = time.time()
         result, bestKey = attack (cipherText, 2, 12, 3)
         endTime = time.time()
         if outputFileName is not None:
             writeToFile (outputFileName, result)
-            print ("Cracking attempt written to " + outputFileName + ". Time taken = "+str(endTime-startTime)+" sec.")            
+            print ("Cracking attempt written to " + outputFileName + ". Time taken = "+str(endTime-startTime)+" sec.")
         else:
-            print ("This is the cracking attempt <" + result + ">. Time taken = "+str(endTime-startTime)+" sec.")        
+            print ("This is the cracking attempt <" + result + ">. Time taken = "+str(endTime-startTime)+" sec.")
     elif test != "":
         if inputFileName is not None:
             test = readFromFile (inputFileName)
@@ -480,7 +484,9 @@ def main ():
         raise Exception ("Invalid arguments specified")
 
 setupLanguage ()
-main ()
+
+if __name__ == "__main__":
+    main ()
 
 
 
