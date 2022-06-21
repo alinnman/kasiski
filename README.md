@@ -12,11 +12,13 @@ Currently it only works for Swedish text since it depends on a language sample. 
     kasiski.py = A python program. 
     
     test_kasiski.py = Test code (uses pytest)
+    
+    requirements.txt = Dependencies on external packages (managed by "pip")
 
 ### Building and dependencies
 
-    It is plain Python code, and runs under v 3.10. Only built-in modules used. 
-    The test is based on pytest (which has to be installed using "pip")
+    The program runs under v 3.10. Only built-in modules are used. 
+    The test is based on pytest (which has to be installed using "pip install -r requirements.txt")
 
 ### To use the python program
 
