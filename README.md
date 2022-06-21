@@ -18,7 +18,7 @@ Currently it only works for Swedish text since it depends on a language sample. 
     It is plain Python code, and runs under v 3.10. Only built-in modules used. 
     The test is based on pytest (which has to be installed using "pip")
 
-### To use the python program:
+### To use the python program
 
     >> python kasiski.py [parameters]
 
@@ -38,5 +38,7 @@ Currently it only works for Swedish text since it depends on a language sample. 
     
 ### Testing
 
-    Just run pytest. First you need to install using "pip install pytest"
+    First you need to install pytest using "pip install pytest"
+    
+    Then just run the tests using
     >> pytest
