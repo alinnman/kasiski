@@ -337,7 +337,7 @@ def findBlockSizes (c, minSize, maxSize, numBs=2):
     '''
     assert (maxSize >= minSize)
     
-    prevIoc = 2**32 # A very large number
+    prevIoc = sys.maxsize # A very large number
     foundRaises = {}
     # Iterate through all possible block sizes
     for blockSize in range (minSize, maxSize+1):
@@ -412,7 +412,7 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
             return "-"
 
         candidateKeys = []
-        bestIml = 2**20
+        bestIml = sys.maxsize # A very large number
         
         # Now iterate for a single item in a possible key, i.e. try to find a 'Caesar' number to use for decryption
         # and see if this can reveal a favourable frequence analysis. 
