@@ -36,6 +36,7 @@ bigramCache    = {}
 # Contains the read sample text for the language
 langSampleText = ""
 
+# Set to the ini file used. Prevents re-loading of parameters.
 languageSetup = ""
 
 def setupLanguage (iniFileName):
@@ -50,7 +51,12 @@ def setupLanguage (iniFileName):
     global langExtraChars
     global langNumChars
     global langSpecialChars
+    
+    # Reset the monogram and bigram table cache objects.
+    monogramCache  = {}
+    bigramCache    = {}    
 
+    # Initialize config parser and basic variables
     config = configparser.RawConfigParser()
     config.read(iniFileName)
     lang             = config ['LanguageSpecific']['lang']
@@ -58,7 +64,8 @@ def setupLanguage (iniFileName):
     langNumChars     = config ['LanguageSpecific']['langNumChars']
     langSpecialChars = config ['LanguageSpecific']['langSpecialChars']
     sampleFileName   = config ['LanguageSpecific']['sampleFileName']
-
+ 
+    # Set up the language strings
     langChars.append (' ')
     for c in string.ascii_lowercase:
         langChars.append (c)
@@ -68,41 +75,60 @@ def setupLanguage (iniFileName):
     for c in langSpecialChars:
         langChars.append (c)
     for c in langNumChars:
-        langChars.append (c)
-
+        langChars.append (c) 
+    
+    # Read the sample text and store it
     with open(sampleFileName, 'r', encoding='utf-8') as file:
         langSampleText = file.read().replace('\n', '')
 
+    # Set up the reverse maps
     for i in range (0, len(langChars)):
         langMap      [langChars[i]] = i
     for i in range (0, len(langAlphaChars)):
         langAlphaMap [langAlphaChars[i]] = i
+        
+    # Set this variable to prevent unnecessary re-loads.    
     languageSetup = iniFileName
 
 def setupMonograms (s, alpha=False):
+    '''Setup a monogram table
+       s : String to use
+       alpha : Indicates whether we only use alpha characters or not.
+    '''
     global monogramCache
 
+    # If the monogram table already exists then reuse it
     try:
         return monogramCache [(s,alpha)]
     except KeyError:
         pass
 
     result = {}
+    
+    # Select chars and reverse map based on alpha parameter.
     if alpha:
         charsChosen = langAlphaChars
         mapChosen = langAlphaMap
     else:
         charsChosen = langChars
         mapChosen = langMap
+        
+    # Initialize everything to zeros.    
     for c in charsChosen:
         result [c] = 0
+        
+    # Go through language string for every character.
     for i in range(0,len(s)):
         a = s [i]
         aPos = -1
+        
+        # Find the position of the character
         try:
             aPos = mapChosen [a]
         except KeyError:
             pass
+            
+        # If the character was found, the increase the monogram counter
         if aPos != -1:
             monogram = str(a)
             count = 0
@@ -111,21 +137,32 @@ def setupMonograms (s, alpha=False):
             except KeyError:
                 pass
             result [monogram] = count + 1
+            
+    # Sum all occurrences
     summing = sum (result.values())
+    
+    # Divide all values, i.e. normalize. 
     for e in result:
         v = result [e]
         if summing == 0:
             result [e] = 0
         else:
             result [e] = v / summing
+    
+    # Store the result in the cache
     monogramCache [(s,alpha)] = result
+    # Return result
     return result
 
 def setupBigrams (s):
+    '''Setup a bigram table
+       s : String to use
+    '''
     global bigramCache
 
     s = s.lower()
 
+    # If the bigram table already exists then reuse it
     try:
         return bigramCache [s]
     except KeyError:
@@ -133,11 +170,13 @@ def setupBigrams (s):
 
     result = {}
 
+    # Go through string and select all pairs of adjacent characters
     for i in range(0,len(s)-1):
         a = s [i]
         b = s [i+1]
         aPos = -1
         bPos = -1
+        # Make sure both characters are part of the language
         try:
             aPos = langAlphaMap [a]
         except KeyError:
@@ -146,6 +185,7 @@ def setupBigrams (s):
             bPos = langAlphaMap [b]
         except KeyError:
             pass
+        # Add the pair to the bigram table
         if (aPos != -1) and (bPos != -1):
             bigram = str(a) + str(b)
             count = 0
@@ -154,33 +194,57 @@ def setupBigrams (s):
             except KeyError:
                 pass
             result [bigram] = count + 1
+    # Normalize the structure
     summing = sum (result.values())
     for e in result:
         v = result [e]
         result [e] = v / summing
+    # Add result to cache
     bigramCache [s] = result
+    # Return result
     return result
 
 def freqAnalysis (s, lang=langSampleText, alpha=False):
+    '''
+    Analyze frequency of letters in a string, and compare with corresponding frequencies in a language
+    s : String to analyze
+    lang : Compared language
+    alpha : Indicates whether we only consider alpha characters or not.
+    '''
     s = s.lower ()
     langNgrams = setupMonograms (lang, alpha)
     sNgrams = setupMonograms (s, alpha)
     count = 0
     summed = 0
+    
+    # We construct a sum of squared differences in frequency (Least-squares loss function). 
+    # This should be as low as possible to indicate positive correlation between string and language
     for m in sNgrams:
         a = sNgrams [m]
         b = langNgrams [m]
         summed += (a - b)**2
         count += 1
     retval = summed
-    return -log(retval)
+    # Avoid log (0)
+    if retval == 0:
+        retval = -1
+    else:
+        retval = -log(retval)    
+    return retval
 
 def freqAnalysisBigrams (s, lang=langSampleText):
+    '''
+    Analyze frequency of bigrams in a string, and compare with corresponding frequencies in a language
+    s : String to analyze
+    lang : Compared language
+    '''
     s = s.lower ()
     langBgrams = setupBigrams (lang)
     sBgrams = setupBigrams (s)
     count = 0
     summed = 0
+    # We construct a sum of squared differences in frequency (Least-squares loss function). 
+    # This should be as low as possible to indicate positive correlation between string and language    
     for m in sBgrams:
         a = sBgrams [m]
         b = 0
@@ -188,11 +252,13 @@ def freqAnalysisBigrams (s, lang=langSampleText):
             b = langBgrams [m]
         except KeyError:
             pass
+        # Punish score if bigram not found
         if b == 0:
             b = -0.1
         summed += (a - b)**2
         count += 1
     retval = summed
+    # Avoid log (0)
     if retval == 0:
         retval = -1
     else:
@@ -200,6 +266,11 @@ def freqAnalysisBigrams (s, lang=langSampleText):
     return retval
 
 def indexOfCoincidence (s):
+    '''
+    See if the string seems to have reduced entropy, i.e. if it seems non-random. 
+    E.g. "AAAAA" has higher index of coindidence compared to "xwore"
+    s : String to analyze
+    '''
     s = s.lower ()
     monograms = setupMonograms (s)
     result = 0
@@ -208,7 +279,12 @@ def indexOfCoincidence (s):
     return result
 
 def Viginere (s, K, alpha=False):
-
+    '''
+    The Viginere encryption algorithm. 
+    s : String to encrypt
+    K : Key to use (list of integers). Note: If len(K) == 1 then this is reduced to a Caesar cipher
+    alpha : Indicates whether we only consider alpha characters or not. 
+    '''
     result = []
     s = s.lower()
     if alpha:
@@ -224,7 +300,9 @@ def Viginere (s, K, alpha=False):
     if kl == 0:
         raise Exception ("len(K) must be > 0")
     kCount = 0
+    # Go through string and construct encrypted string
     for c in s:
+        # If the character cannot be found then we encrypt a ' ' character
         try:
             cn = M [c]
         except KeyError:
@@ -237,35 +315,60 @@ def Viginere (s, K, alpha=False):
     return resultS.join (result)
 
 def negateKey (K):
+    '''
+    Decryption is made with decK <- (-encK)
+    K : key list
+    '''
     result = []
     for i in range (0, len(K)):
         result.append (-K[i])
+    # Return a negated key (decryption key)
     return result
 
 def findBlockSizes (c, minSize, maxSize, numBs=2):
-    prevIoc = 2**32
+    '''
+    Performs a statistical analysis to find a likely used block sized used for Viginère encryption.
+    This is done by calculating the index of coincidence for increasing possible block sized, and trying 
+    to find a sudden increase. This may indicate a used block size. 
+    c : Encrypted string
+    minSize : The shortest blocksize to consider
+    maxSize : The largest blocksize to consider
+    numBs : Number of possible blocksizes to investigate
+    '''
+    assert (maxSize >= minSize)
+    
+    prevIoc = 2**32 # A very large number
     foundRaises = {}
+    # Iterate through all possible block sizes
     for blockSize in range (minSize, maxSize+1):
         iocSum = 0
         counter = 0
+        # Collect all strings from the respective block sizes
         for testStringIndex in range (0,blockSize):
             testString = ""
             currentPos = testStringIndex
             while currentPos < len(c):
                 testString = testString + c[currentPos]
                 currentPos += blockSize
+            # Does this string show low entropy? 
             ioc = indexOfCoincidence (testString)
             iocSum += ioc
             counter += 1
+        # Now make an averate of all coincidence values found
         averageIoc = iocSum / counter
+        # Can we see an increase ("raise") in the coincidence mean value compared to previously computed value
         foundRaises [blockSize] = averageIoc / prevIoc
         prevIoc = averageIoc
+    # Just return if nothing is found
     if len(foundRaises) == 0:
         return []
+    # Find the sharpest "raise" value found.
     bestBlockSize = max(foundRaises.items(), key=lambda x: x[1])[0]
+    # Sort the other found block sized
     sortedBlockSizes = dict(sorted(foundRaises.items(), key=lambda item: item[1], reverse=True))
     retVal = []
     counter = 0
+    # Pack the result structure
     for bs in sortedBlockSizes:
         retVal.append (bs)
         counter += 1
@@ -274,6 +377,11 @@ def findBlockSizes (c, minSize, maxSize, numBs=2):
     return retVal
 
 def getExtract (s, bs, index):
+    '''Helper function to get a "zebra" substring from a string
+    s : String to extract from
+    bs : The block size used
+    index : Start position
+    '''
     result = []
     currentPos = index
     while currentPos < len(s):
@@ -283,10 +391,21 @@ def getExtract (s, bs, index):
     return retVal.join(result)
 
 def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
+    ''' 
+    Core cryptanalysis routine for Viginère cipher.
+    s : String to crack
+    minSize : minimum block size to consider
+    maxSize : maximum block size to consider
+    bsExamined : max number of block sizes to consider
+    look : For debugging. Shows data about a particular block size. Default = -1 (no debugging)
+    alphaOnly : Indicates whether we consider only alpha strings or not
+    '''
 
+    # Start by finding possible block sizes
     bss = findBlockSizes (s,minSize,maxSize,bsExamined)
     comparedResults = {}
 
+    # Iterate through all considered block sizes
     for bs in bss:
 
         if bs == -1:
@@ -294,22 +413,29 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
 
         candidateKeys = []
         bestIml = 2**20
+        
+        # Now iterate for a single item in a possible key, i.e. try to find a 'Caesar' number to use for decryption
+        # and see if this can reveal a favourable frequence analysis. 
         for i in range (0, bs):
             candidateKeys.append ([])
             testString = getExtract (s, bs, i)
 
             examinedTestKeys = {}
 
+            # Iterate through all key item values
             for testKey in range(0, len(langChars)):
                 Ktest = [-testKey]
+                # Decrypt "Caesar style"
                 decPermutedTestKey = Viginere (testString, Ktest, alpha=alphaOnly)
 
                 if look == i:
                     print ("Look at decrypted string for K = "+str(Ktest)+ " = <" + str(decPermutedTestKey) + ">")
 
+                # Does it look like some kind of language here? 
                 freqPoint = freqAnalysis (decPermutedTestKey, langSampleText, False)  
                 examinedTestKeys [testKey] = freqPoint
 
+            # Now sort on best key item values found
             B = max(examinedTestKeys.items(), key=lambda x: x[1])
             bestKey = B [0]
             bestValue = B [1]
@@ -317,7 +443,9 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
             if look == i:
                 print ("Best key was = " + str(bestKey))
 
+            # Store and save the results
             candidateKeys [i].append (bestKey)
+        # Do final collection of the results
         decryptKey = []
         for i in range (0, len(candidateKeys)):
             try:
@@ -325,20 +453,30 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
             except IndexError:
                 # Failed to find suitable key.
                 return "-"
+        # Now make an attempt to decrypt the string used a possible decryption key
         result = Viginere (s, decryptKey, alpha=alphaOnly)
 
         ST = langSampleText
+        # Give this decryption a score based on a weighted calculation of frequency analysis on monograms and bigrams
         freqDecrypted = 2*freqAnalysis (result, ST) + freqAnalysisBigrams (result, ST)
         comparedResults [bs] = (result, freqDecrypted, decryptKey)
 
+    # Very long keys, or short plaintexts will be almost impossible to crack. 
     if len(comparedResults) == 0:
         raise Exception ("Cannot find any suitable decryption key. Cleartext is probably too short.")
+        
+    # Pack the final results and return
     B = max(comparedResults.items(), key=lambda x: x[1][1])
     bestResult = B [1][0]
     bestKey    = B [1][2]
     return bestResult, bestKey
 
 def stringSimilarity (a, b):
+    '''
+    Helper routine to find the similarit between two strings
+    a, b : Strings to compare
+    Returns a value  0 <= r <= 1.0
+    '''
     toCheck = min (len(a), len(b))
     matches = 0
     for i in range (0, toCheck):
@@ -347,6 +485,17 @@ def stringSimilarity (a, b):
     return matches / toCheck
 
 def doEncryption (clearText, minKeyLength, maxKeyLength, alphaOnly=False):
+    '''
+    Encrypt a string used a randomized key. 
+    clearText : String to encrypt
+    minKeyLength : minimum key length to use
+    maxKeyLength : maximum key length to use
+    alphaOnly : indicates whether we consider only alpha strings or not
+    '''
+
+    assert (maxKeyLength >= minKeyLength)
+
+    # Select used key length
     KL = int(random.uniform (minKeyLength, maxKeyLength))
 
     # Randomize a key
@@ -359,16 +508,26 @@ def doEncryption (clearText, minKeyLength, maxKeyLength, alphaOnly=False):
         shift = int(random.uniform (0, LC))
         K.append (shift)
 
+    # Encrypt the string
     encrypted = Viginere (clearText, K, alpha=alphaOnly)
-    ''' This code is just for verification
+    
+    # Make sure we can decrypt back
     decrypted = Viginere (encrypted, negateKey(K), alpha=alphaOnly)
-
-    if (clearText.lower() != decrypted.lower()):
-        raise Exception ("Cipher doesn't work!")
-    '''
+    assert (decrypted.lower () == clearText.lower())
+    
     return encrypted, K
 
 def testAttack (testText, minKeyLength, maxKeyLength, maxSize, bsExamined, look=-1, alphaOnly=False): 
+    '''
+    Perform an attack test.
+    testText : cleartext to use for encryption and attack.
+    minKeyLength : minimum key length to use for encryption
+    maxKeyLength : maximum key length to use for encryption
+    maxSize : maximum key length used for *cracking*
+    bsExamined : number of block sizes to consider while *cracking*
+    look : Debug variable
+    alphaOnly : indicates whether we consider only alpha strings or not
+    '''
     encrypted, usedKey = doEncryption (testText, minKeyLength, maxKeyLength, alphaOnly=alphaOnly)
 
     result, bestKey = attack (encrypted, 1, maxSize, bsExamined, look=look, alphaOnly=alphaOnly)
@@ -376,6 +535,11 @@ def testAttack (testText, minKeyLength, maxKeyLength, maxSize, bsExamined, look=
     return stringSimilarity (result.lower(), testText.lower()), bestKey, result
 
 def testAttacks (clearText, outputFileName=None):
+    '''
+    A test sequence for cracking attempts. Can be used for measuring performance (cpu time and successful cracking)
+    clearText : cleartext to use
+    outputFileName : file to use for writing report. Default = None (use stdout)
+    '''
     NROFTESTS = 100
     MINKL = 4
     MAXKL = 4
@@ -411,10 +575,18 @@ def testAttacks (clearText, outputFileName=None):
 
 
 def encrypt (s, kl) :
+    '''
+    Encrypt a string using a randomized key
+    s : String to encrypt
+    kl : Used key length
+    '''
     encrypted, usedKey = doEncryption (s, kl, kl, False)
     return encrypted, usedKey
 
 def parseArguments (args):
+    '''
+    Parse command line and initialize variables. Also setup language data.
+    '''
     parser = argparse.ArgumentParser(description='Kasiski method',\
                                      epilog='This is a simple test program for Kasiski\'s attack on Vigenère ciphers')
 
@@ -455,6 +627,9 @@ def parseArguments (args):
     return ct, cit, test, inputFileName, outputFileName 
 
 def main (args=None):
+    '''
+    Main routine of program
+    '''
 
     def readFromFile (fileName) :
         with open(fileName, 'r', encoding='utf-8') as file:
