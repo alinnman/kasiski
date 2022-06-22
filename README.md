@@ -39,6 +39,8 @@ Currently it only works for Swedish text since it depends on a language sample. 
     
     -of <output file name> ## Use this to write output to disk
     
+    -ini <ini file name> ## To switch to another ini file. (Default = "kasiski.ini") 
+    
     -h ## For help message.
     
 ### Testing
