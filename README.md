@@ -44,8 +44,6 @@ Currently it only works for Swedish text since it depends on a language sample. 
     -h ## For help message.
     
 ### Testing
-
-    First you need to install pytest using "pip install pytest"
     
-    Then just run the tests using
+    Just run the tests using
     >> pytest
