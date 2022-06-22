@@ -1,6 +1,6 @@
 # kasiski
 
-Contains a python implementation of Kasiski's attack vs the Vigenère cipher. Simple code which can be used for demonstration/education etc. 
+Contains a python implementation (CLI) of Kasiski's attack vs the Vigenère cipher. Simple code which can be used for demonstration/education etc. 
 Currently it only works for Swedish text since it depends on a language sample. (Kasiski's attack is based on statistical analysis). New languages can be added using configuration files only.
 
 - For more information see https://en.wikipedia.org/wiki/Kasiski_examination
