@@ -3,8 +3,8 @@
 Contains a python implementation of Kasiski's attack vs the Vigenère cipher. Simple code which can be used for demonstration/education etc. 
 Currently it only works for Swedish text since it depends on a language sample. (Kasiski's attack is based on statistical analysis). New languages can be added using configuration files only.
 
-For more information see https://en.wikipedia.org/wiki/Kasiski_examination
-Also see Introduction to Modern Cryptography (Katz & Lindell, CRC Press), page 12 (ISBN: 978-0815354369 )
+- For more information see https://en.wikipedia.org/wiki/Kasiski_examination
+- Also see Introduction to Modern Cryptography (Katz & Lindell, CRC Press), page 12 (ISBN: 978-0815354369 )
 
 ### Contents
 
