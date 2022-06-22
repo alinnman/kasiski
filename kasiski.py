@@ -485,7 +485,7 @@ def stringSimilarity (a, b):
 
 def doEncryption (clearText, minKeyLength, maxKeyLength, alphaOnly=False):
     '''
-    Encrypt a string used a randomized key. 
+    Encrypt a string using a randomized key. 
     clearText : String to encrypt
     minKeyLength : minimum key length to use
     maxKeyLength : maximum key length to use
@@ -640,15 +640,7 @@ def parseArguments (args):
     parser.add_argument("-succ","--successive_test", \
                        help="Indicate if successive test should be run (Used for the -test command)", \
                        action="store_const", const="True")                                            
-    #group2 = group.add_argument_group ()                       
-                     
-    '''
-    group.add_argument("-test","--run_sequence_of_tests", \
-                       help="Cleartext to use for encryption and cracking attempts in a test sequence",\
-                       action="store", nargs='?', default="")
-    '''
-
-    #group3 = group2.add_argument_group()                       
+                         
     parser.add_argument("-minkl","--min_key_length", \
                        help="Min key length used in encryption for the -enc and -test commands. (default is 4)", \
                        action="store", nargs='?', default="4")
