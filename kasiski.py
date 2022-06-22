@@ -328,7 +328,7 @@ def negateKey (K):
 def findBlockSizes (c, minSize, maxSize, numBs=2):
     '''
     Performs a statistical analysis to find a likely used block sized used for Viginère encryption.
-    This is done by calculating the index of coincidence for increasing possible block sized, and trying 
+    This is done by calculating the index of coincidence for increasing possible block sizes, and trying 
     to find a sudden increase. This may indicate a used block size. 
     c : Encrypted string
     minSize : The shortest blocksize to consider
@@ -354,7 +354,7 @@ def findBlockSizes (c, minSize, maxSize, numBs=2):
             ioc = indexOfCoincidence (testString)
             iocSum += ioc
             counter += 1
-        # Now make an averate of all coincidence values found
+        # Now make an average of all coincidence values found
         averageIoc = iocSum / counter
         # Can we see an increase ("raise") in the coincidence mean value compared to previously computed value
         foundRaises [blockSize] = averageIoc / prevIoc
@@ -452,7 +452,7 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
                 decryptKey.append (-(candidateKeys[i][0]))
             except IndexError:
                 # Failed to find suitable key.
-                return "-"
+                pass
         # Now make an attempt to decrypt the string used a possible decryption key
         result = Viginere (s, decryptKey, alpha=alphaOnly)
 
@@ -728,7 +728,7 @@ def main (args=None):
         startTime = time.time()
         result, bestKey = attack (cipherText, 1, len(cipherText), 3)
         endTime = time.time()
-        probKeyMsg = " This key was likely used while encrypting : " + str(bestKey) + ". "
+        probKeyMsg = " This key was likely used while encrypting : " + str(negateKey(bestKey)) + ". "
         if outputFileName is not None:
             writeToFile (outputFileName, result)
             print ("Cracking attempt written to " + outputFileName + probKeyMsg +\
