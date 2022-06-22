@@ -473,7 +473,7 @@ def attack (s,minSize,maxSize,bsExamined, look=-1, alphaOnly=False):
 
 def stringSimilarity (a, b):
     '''
-    Helper routine to find the similarit between two strings
+    Helper routine to find the similarity between two strings
     a, b : Strings to compare
     Returns a value  0 <= r <= 1.0
     '''
@@ -534,40 +534,68 @@ def testAttack (testText, minKeyLength, maxKeyLength, maxSize, bsExamined, look=
 
     return stringSimilarity (result.lower(), testText.lower()), bestKey, result
 
-def testAttacks (clearText, outputFileName=None):
+def testAttacks (clearText, minKl=4, maxKl=4, outputFileName=None,\
+                 successiveAttacks=False, verbose=False, maxKeyLengthSearch=None):
     '''
     A test sequence for cracking attempts. Can be used for measuring performance (cpu time and successful cracking)
     clearText : cleartext to use
+    minKl : minimum key length used for *encryption*
+    maxKl : maximum key length used for *encryption*
     outputFileName : file to use for writing report. Default = None (use stdout)
     '''
     NROFTESTS = 100
-    MINKL = 4
-    MAXKL = 4
+    MINKL = minKl
+    MAXKL = maxKl
     TESTTEXT = clearText
     ALPHA = False
     BSEXAMINED = 3
     LOOK = -1
-    MAXKEYLENGTHSEARCH = len(TESTTEXT) // 10
-
-    startTime = time.time()
+    if maxKeyLengthSearch is None:
+        MAXKEYLENGTHSEARCH = max(1,len(TESTTEXT)) // 10
+    else:
+        MAXKEYLENGTHSEARCH = maxKeyLengthSearch
 
     original_stdout = sys.stdout
     if outputFileName is not None:
         f = open(outputFileName, 'w')
         sys.stdout = f 
-
-    successMeasure = 0.0
-    print ("Listing the results of cracking")
-    for i in range (0, NROFTESTS):
-        sm, bestKey, result = testAttack (TESTTEXT, MINKL, MAXKL, MAXKEYLENGTHSEARCH, BSEXAMINED, LOOK, alphaOnly=ALPHA)
-        print ("Using key : " + str(bestKey))
-        print (result)
-        successMeasure += sm
-    endTime = time.time()
-    avgSuccessMeasure = successMeasure / NROFTESTS
-    print ("")
-    print (str(NROFTESTS) + " attacks performed. Success measure is " + str(round(avgSuccessMeasure*100,2)) +\
-           " %. Time taken = " + str(endTime-startTime) + " sec.")
+        
+    if successiveAttacks:
+        startIndex = minKl
+        endIndex   = maxKl
+    else:
+        startIndex = 1
+        endIndex   = 1
+        
+    for attack in range (startIndex, endIndex+1):
+    
+        startTime = time.time()        
+        successMeasure = 0.0
+        if verbose:
+            print ("Listing the results of cracking")
+        for i in range (0, NROFTESTS):
+            if successiveAttacks:
+                kl1 = attack
+                kl2 = attack
+            else:
+                kl1 = MINKL
+                kl2 = MAXKL
+            sm, bestKey, result = testAttack (TESTTEXT, kl1, kl2, MAXKEYLENGTHSEARCH, BSEXAMINED, LOOK, alphaOnly=ALPHA)
+            if verbose:
+                print ("Using key : " + str(bestKey))
+                print (result)
+            successMeasure += sm
+            endTime = time.time()
+            avgSuccessMeasure = successMeasure / NROFTESTS
+        if verbose:
+            print ("")
+        if successiveAttacks:
+            insertKlText = "Key length for encryption = " + str(attack) + ". "
+        else:
+            insertKlText = ""
+        print (str(NROFTESTS) + " attacks performed. "+insertKlText+\
+        "Success measure is " + str(round(avgSuccessMeasure*100,2)) +\
+        " %. Time taken = " + str(endTime-startTime) + " sec.")
 
     sys.stdout = original_stdout
     if outputFileName is not None:
@@ -601,30 +629,70 @@ def parseArguments (args):
                         action="store", nargs='?', default="kasiski.ini")                        
     group = parser.add_mutually_exclusive_group(required=True)
 
-    group.add_argument("-enc",  "--cleartext_to_encrypt", help="Cleartext to encrypt",\
-                       action="store", nargs='?', default="") # nargs='?', const=1, type=int)
-    group.add_argument("-crack", "--ciphertext_to_crack", help="Ciphertext to crack",\
+    group.add_argument("-enc",  "--cleartext_to_encrypt", \
+                       help="Encrypt a string.",\
+                       action="store", nargs='?', default="",metavar="Cleartext")  
+    group.add_argument("-crack", "--ciphertext_to_crack", \
+                       help="Crack a ciphertext string.",\
+                       action="store", nargs='?', default="",metavar="Ciphertext")
+    group.add_argument("-test","--run_sequence_of_tests", \
+                       help="Run a sequence (100 iterations) of encryption and cracking attempts. Keys are randomized.",\
+                       action="store", nargs='?', default="",metavar="Cleartext")    
+    parser.add_argument("-succ","--successive_test", \
+                       help="Indicate if successive test should be run (Used for the -test command)", \
+                       action="store_const", const="True")                                            
+    #group2 = group.add_argument_group ()                       
+                     
+    '''
+    group.add_argument("-test","--run_sequence_of_tests", \
+                       help="Cleartext to use for encryption and cracking attempts in a test sequence",\
                        action="store", nargs='?', default="")
-    group.add_argument("-test","--run_sequence_of_tests", help="Cleartext to use for encryption and cracking attempts in a test sequence",\
-                       action="store", nargs='?', default="")
+    '''
+
+    #group3 = group2.add_argument_group()                       
+    parser.add_argument("-minkl","--min_key_length", \
+                       help="Min key length used in encryption for the -enc and -test commands. (default is 4)", \
+                       action="store", nargs='?', default="4")
+    parser.add_argument("-maxkl","--max_key_length", \
+                       help="Max key length used in encryption for the -enc and -test commands."+\
+                       " (must be greater than -minkl, set == -minkl if omitted)", \
+                       action="store", nargs='?', default="-1") 
+
+    verbose = False
 
     argsParsed = parser.parse_args(args)
     va = vars(argsParsed)
+    if verbose:
+        print ("va = " + str(va)) 
 
-    ct             = va ['cleartext_to_encrypt']
-    cit            = va ['ciphertext_to_crack']
-    test           = va ['run_sequence_of_tests']
+    ct             =     va ['cleartext_to_encrypt' ]
+    cit            =     va ['ciphertext_to_crack'  ]
+    test           =     va ['run_sequence_of_tests']
+    minkl          = int(va ['min_key_length'       ])
+    maxkl          = int(va ['max_key_length'       ])
+    succTest       =     va ['successive_test'      ]
+    
+    if succTest is None:
+        succTest = False
+    else:
+        succTest = True
+        
+    if maxkl == -1:
+        maxkl = minkl
 
-    inputFileName  = va ['input_file']
-    outputFileName = va ['output_file']
+    inputFileName  =     va ['input_file'           ]
+    outputFileName =     va ['output_file'          ]
 
     if (ct is None or cit is None or test is None) and inputFileName is None:
         parser.error ("You need to specify -if since one of -enc, -crack or -test have been set but not assigned a value")
+        
+    if maxkl < minkl :
+        parser.error ("-maxkl parameter must be >= -minkl parameter")
     
     iniFileName = 'kasiski.ini' 
     setupLanguage (va ['ini_file'])
 
-    return ct, cit, test, inputFileName, outputFileName 
+    return ct, cit, test, inputFileName, outputFileName, minkl, maxkl, succTest 
 
 def main (args=None):
     '''
@@ -641,12 +709,13 @@ def main (args=None):
 
     if args == None:
         args = sys.argv[1:]
-    clearText, cipherText, test, inputFileName, outputFileName = parseArguments (args)
+    clearText, cipherText, test, inputFileName, outputFileName, minkl, maxkl, succTest =\
+        parseArguments (args)
 
     if clearText != "" :
         if inputFileName is not None:
             clearText = readFromFile (inputFileName)
-        encryptedText, usedKey = encrypt (clearText,4)
+        encryptedText, usedKey = encrypt (clearText, minkl)
         if outputFileName is not None:
             writeToFile (outputFileName, encryptedText)
             print ("Encrypted text written to " + outputFileName)
@@ -657,17 +726,19 @@ def main (args=None):
         if inputFileName is not None:
             cipherText = readFromFile (inputFileName)
         startTime = time.time()
-        result, bestKey = attack (cipherText, 2, 12, 3)
+        result, bestKey = attack (cipherText, 1, len(cipherText), 3)
         endTime = time.time()
+        probKeyMsg = " This key was likely used while encrypting : " + str(bestKey) + ". "
         if outputFileName is not None:
             writeToFile (outputFileName, result)
-            print ("Cracking attempt written to " + outputFileName + ". Time taken = "+str(endTime-startTime)+" sec.")
+            print ("Cracking attempt written to " + outputFileName + probKeyMsg +\
+             ". Time taken = "+str(endTime-startTime)+" sec.")
         else:
-            print ("This is the cracking attempt <" + result + ">. Time taken = "+str(endTime-startTime)+" sec.")
+            print ("This is the cracking attempt <" + result + ">."+probKeyMsg+" Time taken = "+str(endTime-startTime)+" sec.")
     elif test != "":
         if inputFileName is not None:
             test = readFromFile (inputFileName)
-        testAttacks(test, outputFileName)
+        testAttacks(test, outputFileName=outputFileName, minKl=minkl, maxKl=maxkl, successiveAttacks=succTest)
     else:
         raise Exception ("Invalid arguments specified")
 
