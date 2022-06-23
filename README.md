@@ -26,7 +26,6 @@ Currently it only works for Swedish text since it depends on a language sample. 
 ### To use the python program
 
     >> python kasiski.py [parameters] ## To run the program
-    
     >> python kasisky.py -h ## For help message including parameter descriptions.
     
 ### Testing
