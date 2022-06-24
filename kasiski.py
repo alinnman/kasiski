@@ -16,7 +16,7 @@ import argparse
 import configparser
 import sys
 
-# The setup for the languate
+# The setup for the language
 langChars        = []
 langAlphaChars   = []
 langExtraChars   = ""
@@ -57,7 +57,7 @@ def setupLanguage (iniFileName):
 
     # Initialize config parser and basic variables
     config = configparser.RawConfigParser()
-    config.read(iniFileName)
+    config.read(iniFileName, encoding="utf-8")
     lang             = config ['LanguageSpecific']['lang']
     langExtraChars   = config ['LanguageSpecific']['langExtraChars']
     langNumChars     = config ['LanguageSpecific']['langNumChars']
