@@ -3,6 +3,8 @@
 Contains a python implementation (CLI) of Kasiski's attack vs the Vigenère cipher. Simple code which can be used for demonstration/education etc. 
 Currently it only works for Swedish text since it depends on a language sample. (Kasiski's attack is based on statistical analysis). New languages can be added easily using configuration files only.
 
+The Viginère cipher was widely used in the 1600:s until the 1800:s and was considered to be unbreakable. It was the crypto of choice for diplomats, military etc. Friedrich Kasiski, a German military officer and cryptographer found an attack method in 1863 and this marked the dawn of modern cryptanalysis (art of attacking ciphers), and raised the bar considerably on what constitutes a secure crypto system. Applying Kasiski's method on a ciphertext using pen and paper makes it possible to attack it in a timespan of days only. Using a computer program, such as this, the same feat can be accomplished in a fraction of a second.  
+
 - For more information see https://en.wikipedia.org/wiki/Kasiski_examination
 - Also see Introduction to Modern Cryptography (Katz & Lindell, CRC Press), page 12 (ISBN: 978-0815354369 )
 
